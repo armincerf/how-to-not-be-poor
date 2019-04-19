@@ -1,6 +1,24 @@
-Clone edge, followed steps here https://juxt.pro/edge/docs/setup.html
+== Clone edge
+
+followed steps here https://juxt.pro/edge/docs/setup.html
 
 used flags --reframe --sass
 
 --reframe is undocumented currently
+
+== add react admin
+
+use webpack/npm over shadow
+
+yarn init
+
+yarn add webpack react react-dom react-admin etc
+
+create src/js/index.js
+
+create webpack config file
+
+update foreign libs
+
+run yarn build:dev
 

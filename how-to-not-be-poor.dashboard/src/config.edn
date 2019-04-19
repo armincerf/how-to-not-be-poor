@@ -6,8 +6,26 @@
                         :target "public/dashboard.css"}]}
   :kick/figwheel-main {:builds [{:id "app"
                                  :main how-to-not-be-poor.dashboard.frontend.main
+                                 :closure-defines #profile {:dev {"re_frame.trace.trace_enabled_QMARK_" true}}
+                                 :preloads #profile {:dev [day8.re-frame-10x.preload]}
                                  :output-to "public/frontend.js"
                                  :output-dir "public/frontend.out"
+                                 :foreign-libs [{:file "dist/index_bundle.js"
+                                                 :file-min "dist/index_bundle.min.js"
+                                                 :provides ["material-ui-core"
+                                                            "react-admin"
+                                                            "data-provider"
+                                                            "ra-date-inputs"
+                                                            "react-router-dom"
+                                                            "react-redux"]
+                                                 :global-exports {react-admin ReactAdmin
+                                                                  material-ui-core MaterialUI
+                                                                  data-provider dataProvider
+                                                                  ra-date-inputs dateInputs
+                                                                  react-router-dom ReactRouterDOM
+                                                                  react-redux redux}}]
+                                 :infer-externs true
+                                 :npm-deps false
                                  :asset-path "/frontend.out"
                                  :optimizations #profile {:dev :none
                                                           :prod :advanced}}]

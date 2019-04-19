@@ -5,6 +5,9 @@
 **/log/*
 !**/target/*/.gitkeep
 
+**/node_modules/*
+
+
 # pack'd output
 /*.jar
 **/*.jar
