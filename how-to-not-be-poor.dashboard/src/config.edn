@@ -34,15 +34,13 @@
                         {:port 4400}}}}
 
  :ig.system/base
- {:how-to-not-be-poor.dashboard.foo/string "Hello, dashboard!"
-  [:edge.yada.ig/classpath-name :how-to-not-be-poor.dashboard/index] {:name "index.html"}
+ {[:edge.yada.ig/classpath-name :how-to-not-be-poor.dashboard/index] {:name "index.html"}
   [:edge.yada.ig/resources :how-to-not-be-poor.dashboard/assets] {:path "public/"}
   :edge.yada.ig/listener {:handler #ig/ref :edge.bidi.ig/vhost
                           :port 7979}
   :edge.bidi.ig/vhost [["http://localhost:7979"
                         [""
                          [["/" #ig/ref [:how-to-not-be-poor.dashboard/index :edge.yada.ig/classpath-name]]
-                          ["/hello" #ig/ref :how-to-not-be-poor.dashboard.foo/string]
                           ["" #ig/ref [:how-to-not-be-poor.dashboard/assets :edge.yada.ig/resources]]]]]]}
 
  :ig.system/dev
