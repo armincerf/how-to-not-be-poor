@@ -1,0 +1,6 @@
+Clone edge, followed steps here https://juxt.pro/edge/docs/setup.html
+
+used flags --reframe --sass
+
+--reframe is undocumented currently
+

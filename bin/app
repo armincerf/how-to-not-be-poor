@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if [ "$#" -gt 0 ]; then
+  project_name="$1"
+  shift
+fi
+
+if [ "$project_name" = "--help" -o  "$project_name" = "-h" ]; then
+  project_name="edge/internal.help"
+fi
+
+clojure -Sdeps '{:deps
+                 {seancorfield/clj-new
+                   {:git/url "https://github.com/seancorfield/clj-new"
+                    :sha "21ca1b27f46dc324be084ba839beca555aeda387"}}}' \
+  -m clj-new.create \
+  ./lib/edge-app-template::edge-app-template \
+  "${project_name:-edge/internal.help}" -- "$@"

@@ -1,0 +1,46 @@
+= Edge
+
+link:https://clojurians.zulipchat.com/#narrow/stream/151045-JUXT[image:https://img.shields.io/badge/zulip-join_chat-brightgreen.svg[]]
+
+Documentation is hosted at link:https://juxt.pro/edge/docs/index.html[juxt.pro].
+The sources can be browsed offline in <<doc/resources/doc/sources/index.adoc#>>.
+
+TIP: Use link:https://github.com/asciidoctor/asciidoctor-browser-extension[Asciidoctor browser extension] to view these as html in your browser.
+
+== Intro
+
+For newcomers to the Clojure language it can be quite a daunting task to put together a real Clojure application from scratch.
+That's why we've done this initial step for you and creating a project that you can learn from and build upon.
+
+This isn't merely a toy application.
+Edge is JUXT's baseline architecture which we use for our own professional Clojure projects.
+The name is taken from https://en.wikipedia.org/wiki/Datum_reference[Datum edge].
+
+== Features
+
+Edge is a simple foundation integrating the following:
+
+* link:https://clojure.org/guides/deps_and_cli[Dependency management]
+* Development setup
+* link:https://github.com/juxt/aero[Configuration]
+* link:https://github.com/juxt/yada[Web server] & link:https://github.com/juxt/bidi[routing]
+
+With examples for:
+
+* link:https://github.com/juxt/edge/tree/master/examples/tutorial.vent[A single page application]
+* link:https://github.com/juxt/edge/tree/master/examples/phonebook-api[A REST API]
+* link:https://github.com/juxt/edge/tree/master/examples/phonebook-graphql[A GraphQL API]
+
+For more information on why you'd use Edge, see link:https://juxt.pro/edge/docs/why-edge.html[Why Edge?].
+
+== Copyright & License
+
+The MIT License (MIT)
+
+Copyright © 2016-2019 JUXT LTD.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
