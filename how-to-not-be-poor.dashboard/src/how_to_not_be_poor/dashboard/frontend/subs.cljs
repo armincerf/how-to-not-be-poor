@@ -10,3 +10,8 @@
  ::greeting-index
  (fn [db _]
    (:greeting-index db)))
+
+(reg-sub
+ ::store
+ (fn [db _]
+   (:store db)))

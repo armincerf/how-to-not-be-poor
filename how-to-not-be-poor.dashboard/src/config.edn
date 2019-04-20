@@ -45,12 +45,16 @@
                         [""
                          [["/" #ig/ref [:how-to-not-be-poor.dashboard/index :edge.yada.ig/classpath-name]]
                           ["/login" #ig/ref :how-to-not-be-poor.dashboard.http.auth/login]
+                          ["/admin-api/" #ig/ref :how-to-not-be-poor.dashboard.http.admin-api/admin-handler]
+                          ["/store" #ig/ref :how-to-not-be-poor.dashboard.http.auth/store]
                           ["/callback" #ig/ref :how-to-not-be-poor.dashboard.http.auth/callback]
                           ["" #ig/ref [:how-to-not-be-poor.dashboard/assets :edge.yada.ig/resources]]]]]]
 
   ;; Yada Resources
   :how-to-not-be-poor.dashboard.http.auth/login nil
   :how-to-not-be-poor.dashboard.http.auth/callback nil
+  :how-to-not-be-poor.dashboard.http.auth/store nil
+  :how-to-not-be-poor.dashboard.http.admin-api/admin-handler nil
 
   }
 

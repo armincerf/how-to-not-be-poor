@@ -11,3 +11,5 @@
 # pack'd output
 /*.jar
 **/*.jar
+
+**/resources/credentials.edn

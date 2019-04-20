@@ -13,7 +13,7 @@
     db/app-db))
 
 (rf/reg-event-fx
- :generic-ajax-failure
+ ::generic-ajax-failure
  (fn [{db :db} [_ response]]
    (js/console.error "bad response " response)))
 
@@ -31,3 +31,16 @@
                       params
                       [:login-success]
                       [:generic-ajax-failure])))
+
+(rf/reg-event-fx
+ ::get-store
+ (fn [{db :db} [_ params]]
+   (ajax/get-request "/store"
+                      [::store-success]
+                      [::generic-ajax-failure])))
+
+(rf/reg-event-db
+ ::store-success
+ (fn [db [_ response]]
+   (assoc db :store response)))
+
