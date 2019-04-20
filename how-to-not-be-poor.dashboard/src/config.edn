@@ -50,10 +50,16 @@
                           ["/callback" #ig/ref :how-to-not-be-poor.dashboard.http.auth/callback]
                           ["" #ig/ref [:how-to-not-be-poor.dashboard/assets :edge.yada.ig/resources]]]]]]
 
+  ;; Crux
+  :juxt.crux.ig.system/standalone {:kv-backend "crux.kv.rocksdb.RocksKv"}
+
   ;; Yada Resources
-  :how-to-not-be-poor.dashboard.http.auth/login nil
-  :how-to-not-be-poor.dashboard.http.auth/callback nil
-  :how-to-not-be-poor.dashboard.http.auth/store nil
+  :how-to-not-be-poor.dashboard.http.auth/login
+  {:system #ig/ref :juxt.crux.ig/system}
+  :how-to-not-be-poor.dashboard.http.auth/callback
+  {:system #ig/ref :juxt.crux.ig/system}
+  :how-to-not-be-poor.dashboard.http.auth/store
+  {:system #ig/ref :juxt.crux.ig/system}
   :how-to-not-be-poor.dashboard.http.admin-api/admin-handler nil
 
   }

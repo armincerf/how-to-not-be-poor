@@ -2,6 +2,7 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
+   crux.api
    [integrant.core :as ig]
    [schema.core :as s]
    [clj-http.client :as http]
@@ -46,7 +47,7 @@
                        (.getMessage exception)))))
 
 (defn data-api-request
-  [uri-stub]
+  [system uri-stub]
   (let [full-uri (str "https://api.truelayer.com/data/v1/" uri-stub)
         {:keys [access-token refresh-token]} (:tokens @store)]
     (http/get full-uri
@@ -55,6 +56,13 @@
                :async? true}
               ;; respond callback
               (fn [response]
+                (crux.api/submit-tx
+                 system
+                 [[:crux.tx/put :data
+                   (merge
+                    {:crux.db/id :data} (-> response
+                                            :body
+                                            :results))]])
                 (swap! store #(assoc-in % [:data uri-stub]
                                         (concat (or (get-in @store [:data uri-stub]) [])
                                                 (-> response
@@ -72,13 +80,12 @@
                 (prn exception)))))
 
 (defn download-data
-  []
-  (data-api-request "info")
-  (data-api-request "transactions"))
+  [system]
+  (data-api-request system "info")
+  (data-api-request system "transactions"))
 
 (defn authenticate-truelayer
-  [ctx]
-  (def ctx ctx)
+  [ctx system]
   (let [{:keys [access_token refresh_token] :as response}
         (:body (http/post
                 "https://auth.truelayer.com/connect/token"
@@ -92,11 +99,11 @@
     (when access_token
       (swap! store #(assoc % :tokens {:access-token access_token
                                       :refresh-token refresh_token}))
-      (download-data))
+      (download-data system))
     (some? access_token)))
 
 (defmethod ig/init-key ::login
-  [id _]
+  [id {:keys [system]}]
   (yada/resource
    {:id id
     :methods
@@ -104,7 +111,7 @@
      {:consumes {:media-type "application/json"}
       :produces {:media-type "application/json"}
       :response (fn [ctx]
-                  (let [user (authenticate-truelayer ctx)]
+                  (let [user (authenticate-truelayer ctx system)]
                     (cond
                       (= "suspended" (:status user))
                       (merge (:response ctx)
@@ -119,14 +126,14 @@
                       :else user)))}}}))
 
 (defmethod ig/init-key ::callback
-  [id _]
+  [id {:keys [system]}]
   (yada/resource
    {:id id
     :methods
     {:get
      {:produces {:media-type "application/json"}
       :response (fn [ctx]
-                  (let [user (authenticate-truelayer ctx)]
+                  (let [user (authenticate-truelayer ctx system)]
                     (cond
                       (= "suspended" (:status user))
                       (merge (:response ctx)
@@ -145,12 +152,14 @@
                         :headers {"Location" "/"}}))))}}}))
 
 (defmethod ig/init-key ::store
-  [id _]
+  [id {:keys [system]}]
   (yada/resource
    {:id id
     :methods
     {:get
      {:produces {:media-type "application/json"}
       :response (fn [ctx]
-                  (or (:data @store)
-                      {:error "No data yet, please add an account"}))}}}))
+                  (let [db (crux.api/db system)
+                        data (crux.api/entity db :data)]
+                    (or data
+                        {:error "No data yet, please add an account"})))}}}))

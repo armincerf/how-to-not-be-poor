@@ -3,6 +3,9 @@
  {org.clojure/clojure {:mvn/version "1.10.0"}
   juxt.edge/lib.app {:local/root "../lib/edge.app"}
 
+  juxt.crux/ig {:local/root "../lib/crux.ig"}
+  org.rocksdb/rocksdbjni {:mvn/version "5.17.2"}
+
   yada {:mvn/version "1.3.0-alpha7"}
   juxt.edge/yada.ig {:local/root "../lib/edge.ig.yada"}
   juxt.edge/bidi.ig {:local/root "../lib/edge.ig.bidi"}

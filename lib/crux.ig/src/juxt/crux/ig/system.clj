@@ -1,6 +1,6 @@
 (ns juxt.crux.ig.system
   (:require [clojure.java.io :as io]
-            crux.api
+            [crux.api :as crux]
             [integrant.core :as ig])
   (:import java.nio.file.attribute.FileAttribute
            java.nio.file.Files))
@@ -39,8 +39,8 @@
 
 (defmethod ig/init-key ::standalone
   [_ opts]
-  (crux.api/start-standalone-system opts))
+  (crux/start-standalone-system opts))
 
-(defmethod ig/init-key ::local-node
+(defmethod ig/init-key ::cluster-node
   [_ opts]
-  (crux.api/start-local-node opts))
+  (crux/start-cluster-node opts))
