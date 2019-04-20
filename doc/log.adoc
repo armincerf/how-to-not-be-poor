@@ -22,3 +22,10 @@ update foreign libs
 
 run yarn build:dev
 
+== add auth flow
+
+add auth to react admin following docs
+
+add login route and /http/auth.clj file
+
+

@@ -9,6 +9,7 @@
   tick/tick {:mvn/version "0.4.10-alpha"}
   medley {:mvn/version "1.1.0"}
   integrant {:mvn/version "0.7.0"}
+  clj-http {:mvn/version "3.9.1"}
 
   org.clojure/tools.logging {:mvn/version "0.5.0-alpha"}}
 
@@ -28,7 +29,7 @@
            juxt/kick.alpha
            {:git/url "https://github.com/juxt/kick.alpha.git"
             :sha "06063beadfa72dfe23480727c347976b608e8316"}
-           org.clojure/clojurescript {:mvn/version "1.10.520"}
+           org.clojure/clojurescript {:mvn/version "1.10.238"}
            binaryage/devtools {:mvn/version "0.9.10"}
            reagent {:mvn/version "0.8.1"}
            re-frame {:mvn/version "0.10.6"}

@@ -33,6 +33,9 @@
                        {:ring-server-options
                         {:port 4400}}}}
 
+ :ig.system/dev
+ {:edge.kick/builder #ref [:edge.kick/config]}
+
  :ig.system/base
  {[:edge.yada.ig/classpath-name :how-to-not-be-poor.dashboard/index] {:name "index.html"}
   [:edge.yada.ig/resources :how-to-not-be-poor.dashboard/assets] {:path "public/"}
@@ -41,10 +44,15 @@
   :edge.bidi.ig/vhost [["http://localhost:7979"
                         [""
                          [["/" #ig/ref [:how-to-not-be-poor.dashboard/index :edge.yada.ig/classpath-name]]
-                          ["" #ig/ref [:how-to-not-be-poor.dashboard/assets :edge.yada.ig/resources]]]]]]}
+                          ["/login" #ig/ref :how-to-not-be-poor.dashboard.http.auth/login]
+                          ["/callback" #ig/ref :how-to-not-be-poor.dashboard.http.auth/callback]
+                          ["" #ig/ref [:how-to-not-be-poor.dashboard/assets :edge.yada.ig/resources]]]]]]
 
- :ig.system/dev
- {:edge.kick/builder #ref [:edge.kick/config]}
+  ;; Yada Resources
+  :how-to-not-be-poor.dashboard.http.auth/login nil
+  :how-to-not-be-poor.dashboard.http.auth/callback nil
+
+  }
 
  :ig/system #profile {:dev #merge [#ref [:ig.system/base]
                                    #ref [:ig.system/dev]]
