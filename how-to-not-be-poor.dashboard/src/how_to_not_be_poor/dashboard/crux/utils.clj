@@ -69,6 +69,11 @@
       (crux/q db {:find '[?e]
                   :where [['?e attribute value]]})))))
 
+(defn pull-ids
+  [system ids]
+  (let [db (crux/db system)]
+    (map #(crux/entity db %) ids)))
+
 (defn str->key
   [str]
   (if (str/blank? str)

@@ -56,9 +56,13 @@
   (when table
     10))
 
-(defn- build-where-clause
-  [ids]
-  1)
+(defn- crux-get-many
+  [system table id-filters]
+  (let [ids (vals id-filters)]
+    (map #(assoc % :id (:crux.db/id %))
+         (if ids
+           (crux.utils/pull-ids system ids)
+           (crux.utils/query-pull-all system :table-name table)))))
 
 ;; very naive for now, ignores pagination and referenced attributes. should
 ;; replace with fulltext search when appropriate
@@ -85,10 +89,7 @@
                                                   (= % "q"))))
         _ (def id-filters id-filters)
         search-text (get query-params "q")
-
-        where-clause (build-where-clause id-filters)
-        result (map #(assoc % :id (:crux.db/id %))
-                    (crux.utils/query-pull-all system :table-name table))
+        result (crux-get-many system table id-filters)
         sorted-result
         (cond->> result
           (and (some? order)
