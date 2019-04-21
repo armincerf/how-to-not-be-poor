@@ -74,6 +74,11 @@
   (let [db (crux/db system)]
     (map #(crux/entity db %) ids)))
 
+(defn pull-tx
+  "pulls only when it sees a given tx time has been transacted"
+  [system eid tx-time]
+  (crux/entity (crux/db system (java.util.Date.) tx-time) eid))
+
 (defn str->key
   [str]
   (if (str/blank? str)

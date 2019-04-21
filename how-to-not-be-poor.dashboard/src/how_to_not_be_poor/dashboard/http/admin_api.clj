@@ -2,7 +2,6 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :as logging]
             [how-to-not-be-poor.dashboard.crux.utils :as crux.utils]
-            [how-to-not-be-poor.dashboard.http.auth :refer [store]]
             [integrant.core :as ig]
             [medley.core :as medley]
             [yada.yada :as yada]))
@@ -19,19 +18,21 @@
 (defn get-item
   [ctx]
   (let [{:keys [table id]} (parse-route-params (:route-params ctx))]
-    (get-in @store [:data table id])))
+    ;(get-in @store [:data table id])
+    ))
 
 (defn put-item
   [ctx]
   (let [{:keys [table id]} (parse-route-params (:route-params ctx))]
-    (swap! store #(assoc-in % [:data table id] (:body ctx)))
+    ;(swap! store #(assoc-in % [:data table id] (:body ctx)))
     (get-item ctx)))
 
 (defn create-item
   [ctx]
   (let [table (keyword (:table-name-string (:route-params ctx)))]
-    (swap! store #(assoc-in % [:data table (:id (:body ctx))] (:value (:body ctx))))
-    (get-in @store [:data table (:id (:body ctx))])))
+    ;(swap! store #(assoc-in % [:data table (:id (:body ctx))] (:value (:body ctx))))
+    ;(get-in @store [:data table (:id (:body ctx))])
+    ))
 
 (defn delete-item
   [ctx]
@@ -104,10 +105,9 @@
                    (if (= :desc order)
                      (comp - compare)
                      compare))
-          (and (int? end)
-               (>= row-count end))
+          (int? end)
           ((fn [s e r]
-             (into [] (subvec (vec r) s e))) start end))]
+             (into [] (subvec (vec r) s e))) start (min end row-count)))]
     (merge response
            {:headers {"x-total-count" row-count}
             :body  (if (zero? row-count)

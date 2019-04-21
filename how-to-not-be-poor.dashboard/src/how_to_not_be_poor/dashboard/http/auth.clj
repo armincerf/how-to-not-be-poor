@@ -9,16 +9,26 @@
    [clj-http.client :as http]
    [yada.yada :as yada]))
 
-(def store (atom {:tokens {:access-token nil
-                           :refresh-token nil}
-                  :data nil}))
-
 (def creds (edn/read-string (slurp (io/resource "credentials.edn"))))
 
 (def base-uri "https://api.truelayer.com/data/v1/")
 
+(defn- get-tokens
+  [system]
+  (crux.utils/entity system :truelayer-tokens))
+
+(defn- store-tokens
+  [system access refresh]
+  (prn "storing new tokens, old = " (:refresh-token (get-tokens system)) "new = " refresh)
+  (crux.api/submit-tx
+   system
+   [[:crux.tx/put :truelayer-tokens
+     {:crux.db/id :truelayer-tokens
+      :access-token access
+      :refresh-token refresh}]]))
+
 (defn renew-token!
-  [refresh-token]
+  [system refresh-token]
   (let [{:keys [access_token refresh_token] :as response}
         (http/post "https://auth.truelayer.com/connect/token"
                    {:form-params
@@ -28,59 +38,8 @@
                     :as :json})]
     (prn "refreshing token" refresh-token)
     (when access_token
-      (swap! store #(assoc % :tokens {:access-token access_token
-                                      :refresh-token refresh_token})))
+      (store-tokens system access_token refresh_token))
     (some? access_token)))
-
-(defn load-transactions
-  [account-id access-token]
-  (http/get (str "https://api.truelayer.com/data/v1/cards/"
-                 account-id "/transactions")
-            {:headers {"Authorization" (str "Bearer " access-token)}
-             :as :json
-             :async? true}
-            (fn [response] 
-              (swap! store #(assoc-in % [:data "transactions"]
-                                      (concat (or (get-in @store [:data "transactions"]) [])
-                                              (-> response
-                                                  :body
-                                                  :results)))))
-            (fn [exception]
-              (println "exception message is: "
-                       (.getMessage exception)))))
-
-(defn data-api-request
-  [system uri-stub]
-  (let [full-uri (str "https://api.truelayer.com/data/v1/" uri-stub)
-        {:keys [access-token refresh-token]} (:tokens @store)]
-    (http/get full-uri
-              {:headers {"Authorization" (str "Bearer " access-token)}
-               :as :json
-               :async? true}
-              ;; respond callback
-              (fn [response]
-                (crux.api/submit-tx
-                 system
-                 [[:crux.tx/put :data
-                   (merge
-                    {:crux.db/id :data} (-> response
-                                            :body
-                                            :results))]])
-                (swap! store #(assoc-in % [:data uri-stub]
-                                        (concat (or (get-in @store [:data uri-stub]) [])
-                                                (-> response
-                                                    :body
-                                                    :results))))
-                (when (= "cards" uri-stub)
-                  (doseq [card (-> response :body :results)]
-                    (prn "doing" card)
-                    (let [account-id (:account_id card)]
-                      (load-transactions account-id access-token)))))
-              ;; raise callback
-              (fn [exception]
-                (println "exception message is: "
-                                       (.getMessage exception))
-                (prn exception)))))
 
 (defn transact-response
   [system response table-name id-key]
@@ -106,7 +65,7 @@
   ([system table-name id-key]
    (get-data system table-name id-key (str base-uri table-name)))
   ([system table-name id-key uri]
-   (let [{:keys [access-token refresh-token]} (:tokens @store)]
+   (let [{:keys [access-token refresh-token]} (get-tokens system)]
      (http/get uri
                {:headers {"Authorization" (str "Bearer " access-token)}
                 :as :json
@@ -134,8 +93,7 @@
                  (println
                   table-name
                   "exception message is: "
-                  (.getMessage exception))
-                 (prn "full exception " exception))))))
+                  (.getMessage exception)))))))
 
 (defn download-data
   [system]
@@ -154,12 +112,14 @@
                   {:grant_type "authorization_code"
                    :redirect_uri "http://localhost:7979/callback"
                    :code (get-in ctx [:parameters :query "code"])})
-                 :as :json}))]
-    (when access_token
-      (swap! store #(assoc % :tokens {:access-token access_token
-                                      :refresh-token refresh_token}))
+                 :as :json}))
+        {:keys [crux.tx/tx-time]}
+        (store-tokens system access_token refresh_token)
+        {:keys [access-token]}
+        (crux.utils/pull-tx system :truelayer-tokens tx-time)]
+    (when (some? access-token)
       (download-data system))
-    (some? access_token)))
+    (some? access-token)))
 
 (defmethod ig/init-key ::login
   [id {:keys [system]}]
