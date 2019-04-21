@@ -1,6 +1,7 @@
 (ns how-to-not-be-poor.dashboard.http.admin-api
   (:require [clojure.string :as str]
             [clojure.tools.logging :as logging]
+            [how-to-not-be-poor.dashboard.crux.utils :as crux.utils]
             [how-to-not-be-poor.dashboard.http.auth :refer [store]]
             [integrant.core :as ig]
             [medley.core :as medley]
@@ -70,37 +71,43 @@
           results))
 
 (defn get-many
-  [{:keys [parameters response]}]
+  [system {:keys [parameters response]}]
   (let [{:keys [table-name-string]} (:path parameters)
-        table (.toLowerCase table-name-string)
+        table (keyword (.toLowerCase table-name-string))
         query-params (:query parameters)
 
         order (parse-string-query-param "_order" query-params)
         sort (parse-string-query-param "_sort" query-params)
-        start (parse-int-query-param "_start" query-params)
-        end (parse-int-query-param "_end" query-params)
 
         ;; query params without a starting '_' except q are id filters
         id-filters (some->> query-params
                          (medley/remove-keys #(or (str/starts-with? % "_")
                                                   (= % "q"))))
-
+        _ (def id-filters id-filters)
         search-text (get query-params "q")
 
         where-clause (build-where-clause id-filters)
-        query-result (map #(assoc % :id (hash (or (:account_id %) (first %)))) (get-in @store [:data table]))
+        result (map #(assoc % :id (:crux.db/id %))
+                    (crux.utils/query-pull-all system :table-name table))
+        sorted-result
+        (cond->> result
+          (and (some? order)
+               (some? sort))
+          (sort-by (keyword sort)
+                   (if (= :desc order)
+                     (comp - compare)
+                     compare)))
+
         result (if search-text
-                 (filter-results-by-search query-result search-text)
-                 query-result)
-        row-count (if search-text
-                    (count result)
-                    (count-rows table where-clause))]
+                 (filter-results-by-search sorted-result search-text)
+                 sorted-result)
+        row-count (count result)]
     (merge response
            {:headers {"x-total-count" row-count}
             :body (if (seq id-filters) (take 1 result) result)})))
 
 (defmethod ig/init-key ::admin-handler
-  [id _]
+  [id {:keys [system]}]
   [[[:table-name-string "/" :id]
     (yada/resource
      {:id id
@@ -121,7 +128,7 @@
       :methods
       {:get
        {:produces {:media-type "application/json"}
-        :response #(get-many %)}
+        :response #(get-many system %)}
        :post
        {:produces {:media-type "application/json"}
         :consumes {:media-type "application/json"}

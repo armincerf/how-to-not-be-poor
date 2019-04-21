@@ -2,7 +2,8 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
-   crux.api
+   [crux.api :as crux]
+   [how-to-not-be-poor.dashboard.crux.utils :as crux.utils]
    [integrant.core :as ig]
    [schema.core :as s]
    [clj-http.client :as http]
@@ -13,6 +14,8 @@
                   :data nil}))
 
 (def creds (edn/read-string (slurp (io/resource "credentials.edn"))))
+
+(def base-uri "https://api.truelayer.com/data/v1/")
 
 (defn renew-token!
   [refresh-token]
@@ -79,10 +82,41 @@
                                        (.getMessage exception))
                 (prn exception)))))
 
+(defn get-info
+  [system]
+  (let [uri (str base-uri "info")
+        {:keys [access-token refresh-token]} (:tokens @store)]
+    (http/get uri
+              {:headers {"Authorization" (str "Bearer " access-token)}
+               :as :json
+               :async? true}
+              ;; respond callback
+              (fn [response]
+               (prn "transacting") 
+                (prn "transacted" (crux.api/submit-tx
+                                   system
+                                   (vec (for [result (-> response
+                                                         :body
+                                                         :results)
+                                              :let [id (crux.utils/str->key
+                                                        (:full_name result))]]
+                                          (do (prn "id = " id)
+                                              [:crux.tx/put id
+                                               (merge
+                                                {:crux.db/id id
+                                                 :table-name :info}
+                                                result)
+                                               (clojure.instant/read-instant-date
+                                                (:update_timestamp result))]))))))
+              ;; raise callback
+              (fn [exception]
+                (println "exception message is: "
+                         (.getMessage exception))
+                (prn exception)))))
+
 (defn download-data
   [system]
-  (data-api-request system "info")
-  (data-api-request system "transactions"))
+  (get-info system))
 
 (defn authenticate-truelayer
   [ctx system]
@@ -159,7 +193,9 @@
     {:get
      {:produces {:media-type "application/json"}
       :response (fn [ctx]
-                  (let [db (crux.api/db system)
-                        data (crux.api/entity db :data)]
+                  (def system system)
+                  (def db (crux/db system))
+                  (let [db (crux/db system)
+                        data (crux.utils/query-pull-all system :table-name :info)]
                     (or data
                         {:error "No data yet, please add an account"})))}}}))

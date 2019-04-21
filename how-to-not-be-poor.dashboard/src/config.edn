@@ -60,7 +60,8 @@
   {:system #ig/ref :juxt.crux.ig/system}
   :how-to-not-be-poor.dashboard.http.auth/store
   {:system #ig/ref :juxt.crux.ig/system}
-  :how-to-not-be-poor.dashboard.http.admin-api/admin-handler nil
+  :how-to-not-be-poor.dashboard.http.admin-api/admin-handler
+  {:system #ig/ref :juxt.crux.ig/system}
 
   }
 
