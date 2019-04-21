@@ -2,6 +2,7 @@
     (:require [reagent.core :as r :refer [atom]]
               [cljs.pprint :as pp :refer [pprint]]
               [re-frame.core :refer [subscribe dispatch dispatch-sync]]
+              [how-to-not-be-poor.dashboard.frontend.views.transactions :as transactions]
               [how-to-not-be-poor.dashboard.frontend.handlers :as handlers]
               [how-to-not-be-poor.dashboard.frontend.views.info :as info]
               [how-to-not-be-poor.dashboard.frontend.subs :as subs]
@@ -44,4 +45,4 @@
    [:> Resource {:name "Cards"
                  :list (rc cards/list-component)}]
    [:> Resource {:name "Transactions"
-                 :list ListGuesser}]])
+                 :list (rc transactions/list-component)}]])

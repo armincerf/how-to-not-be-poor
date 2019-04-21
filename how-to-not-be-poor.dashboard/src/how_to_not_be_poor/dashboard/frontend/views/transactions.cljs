@@ -1,4 +1,4 @@
-(ns how-to-not-be-poor.dashboard.frontend.views.cards
+(ns how-to-not-be-poor.dashboard.frontend.views.transactions
   (:require [react-admin
              :refer
              [Create
@@ -21,13 +21,12 @@
   [props]
   [:> List props
    [:> Datagrid
-    [:> TextField {:source "crux.db/id"}]
-    [:> TextField {:source "partial_card_number"}]
-    [:> TextField {:source "name_on_card"}]
+    [:> TextField {:source "description"}]
+    [:> NumberField {:source "amount"}]
+    [:> TextField {:source "transaction_classification"}]
+    [:> TextField {:source "meta.provider_transaction_category"}]
+    [:> TextField {:source "transaction_category"}]
+    [:> TextField {:source "transaction_type"}]
     [:> TextField {:source "currency"}]
-    [:> TextField {:source "card_network"}]
-    [:> TextField {:source "display_name"}]
-    [:> TextField {:source "provider.display_name"}]
-    [:> TextField {:source "card_type"}]
-    [:> DateField {:source "update_timestamp"}]]])
-
+    [:> TextField {:source "merchant_name"}]
+    [:> DateField {:source "timestamp"}]]])

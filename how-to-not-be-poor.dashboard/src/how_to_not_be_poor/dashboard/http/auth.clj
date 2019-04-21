@@ -82,41 +82,66 @@
                                        (.getMessage exception))
                 (prn exception)))))
 
-(defn get-info
-  [system]
-  (let [uri (str base-uri "info")
-        {:keys [access-token refresh-token]} (:tokens @store)]
-    (http/get uri
-              {:headers {"Authorization" (str "Bearer " access-token)}
-               :as :json
-               :async? true}
-              ;; respond callback
-              (fn [response]
-               (prn "transacting") 
-                (prn "transacted" (crux.api/submit-tx
-                                   system
-                                   (vec (for [result (-> response
-                                                         :body
-                                                         :results)
-                                              :let [id (crux.utils/str->key
-                                                        (:full_name result))]]
-                                          (do (prn "id = " id)
-                                              [:crux.tx/put id
-                                               (merge
-                                                {:crux.db/id id
-                                                 :table-name :info}
-                                                result)
-                                               (clojure.instant/read-instant-date
-                                                (:update_timestamp result))]))))))
-              ;; raise callback
-              (fn [exception]
-                (println "exception message is: "
-                         (.getMessage exception))
-                (prn exception)))))
+(defn transact-response
+  [system response table-name id-key]
+  (prn "transacting") 
+  (prn "transacted"
+       (crux.api/submit-tx
+        system
+        (vec (for [result (-> response
+                              :body
+                              :results)
+                   :let [id (crux.utils/str->key
+                             (id-key result))]]
+               [:crux.tx/put id
+                (merge
+                 {:crux.db/id id
+                  :table-name (keyword table-name)}
+                 result)
+                (clojure.instant/read-instant-date
+                 (or (:update_timestamp result)
+                     (:timestamp result)))])))))
+
+(defn get-data
+  ([system table-name id-key]
+   (get-data system table-name id-key (str base-uri table-name)))
+  ([system table-name id-key uri]
+   (let [{:keys [access-token refresh-token]} (:tokens @store)]
+     (http/get uri
+               {:headers {"Authorization" (str "Bearer " access-token)}
+                :as :json
+                :async? true}
+               ;; respond callback
+               (fn [response]
+                 (transact-response system response table-name id-key)
+                 (cond
+                   (= table-name "accounts")
+                   (doseq [result (-> response :body :results)]
+                     (get-data
+                      system
+                      "transactions"
+                      :transaction_id
+                      (str base-uri "accounts/" (id-key result) "/transactions")))
+                   (= table-name "cards")
+                   (doseq [result (-> response :body :results)]
+                     (get-data
+                      system
+                      "transactions"
+                      :transaction_id
+                      (str base-uri "cards/" (id-key result) "/transactions")))))
+               ;; raise callback
+               (fn [exception]
+                 (println
+                  table-name
+                  "exception message is: "
+                  (.getMessage exception))
+                 (prn "full exception " exception))))))
 
 (defn download-data
   [system]
-  (get-info system))
+  (get-data system "info" :full_name)
+  (get-data system "accounts" :account_id)
+  (get-data system "cards" :account_id))
 
 (defn authenticate-truelayer
   [ctx system]
