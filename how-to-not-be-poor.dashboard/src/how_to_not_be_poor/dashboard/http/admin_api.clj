@@ -107,7 +107,7 @@
           (and (int? end)
                (>= row-count end))
           ((fn [s e r]
-             (subvec (vec r) s e)) start end))]
+             (into [] (subvec (vec r) s e))) start end))]
     (merge response
            {:headers {"x-total-count" row-count}
             :body  (if (zero? row-count)
