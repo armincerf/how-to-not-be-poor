@@ -42,6 +42,8 @@
              :dashboard (rc dashboard)}
    [:> Resource {:name "Info"
                  :list (rc info/list-component)}]
+   [:> Resource {:name "Accounts"
+                 :list (rc cards/list-component)}]
    [:> Resource {:name "Cards"
                  :list (rc cards/list-component)}]
    [:> Resource {:name "Transactions"

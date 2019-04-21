@@ -82,6 +82,8 @@
 
         order (parse-string-query-param "_order" query-params)
         sort (parse-string-query-param "_sort" query-params)
+        start (parse-int-query-param "_start" query-params)
+        end (parse-int-query-param "_end" query-params)
 
         ;; query params without a starting '_' except q are id filters
         id-filters (some->> query-params
@@ -90,6 +92,10 @@
         _ (def id-filters id-filters)
         search-text (get query-params "q")
         result (crux-get-many system table id-filters)
+        result (if search-text
+                 (filter-results-by-search result search-text)
+                 result)
+        row-count (count result)
         sorted-result
         (cond->> result
           (and (some? order)
@@ -97,15 +103,16 @@
           (sort-by (keyword sort)
                    (if (= :desc order)
                      (comp - compare)
-                     compare)))
-
-        result (if search-text
-                 (filter-results-by-search sorted-result search-text)
-                 sorted-result)
-        row-count (count result)]
+                     compare))
+          (and (int? end)
+               (>= row-count end))
+          ((fn [s e r]
+             (subvec (vec r) s e)) start end))]
     (merge response
            {:headers {"x-total-count" row-count}
-            :body (if (seq id-filters) (take 1 result) result)})))
+            :body  (if (zero? row-count)
+                     []
+                     sorted-result)})))
 
 (defmethod ig/init-key ::admin-handler
   [id {:keys [system]}]

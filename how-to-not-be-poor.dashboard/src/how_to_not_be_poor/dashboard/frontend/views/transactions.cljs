@@ -10,16 +10,19 @@
               List
               NumberField
               NumberInput
+              Filter
               ReferenceField
               ReferenceInput
               SelectInput
               SimpleForm
               TextField
-              TextInput]]))
+              TextInput]]
+            [how-to-not-be-poor.dashboard.frontend.common
+             :as common :refer [ce rc]]))
 
 (defn list-component
   [props]
-  [:> List props
+  [:> List (merge props {:filters (ce (rc common/search-filter))})
    [:> Datagrid
     [:> TextField {:source "description"}]
     [:> NumberField {:source "amount"}]
