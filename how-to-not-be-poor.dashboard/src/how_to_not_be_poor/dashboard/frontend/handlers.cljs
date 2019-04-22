@@ -34,6 +34,12 @@
  (fn [db [_ response]]
    (assoc db (:key response) (:value response))))
 
+(rf/reg-event-db
+ :update-progress
+ (fn [db [_ response]]
+   (update db (:key response)
+           #(merge % (:value response)))))
+
 (rf/reg-event-fx
  ::generic-ajax-failure
  (fn [{db :db} [_ response]]

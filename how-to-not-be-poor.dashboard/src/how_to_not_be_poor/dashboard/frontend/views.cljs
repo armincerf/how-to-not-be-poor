@@ -21,10 +21,10 @@
 
 (defn dashboard
   []
-  (let [store (subscribe [::subs/store])]
+  (let [progress (subscribe [::subs/account-progress])]
     [:> Card
      [:> CardHeader {:title "Welcome!"}]
-     [:> CardContent (common/pprint-code @store)]
+     [:> CardContent (common/pprint-code @progress)]
      [:> CardContent
       [:button {:on-click #(dispatch [::handlers/get-store])} "Load data"]]
      [:> CardContent

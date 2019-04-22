@@ -58,7 +58,8 @@
   :how-to-not-be-poor.dashboard.http.auth/login
   {:system #ig/ref :juxt.crux.ig/system}
   :how-to-not-be-poor.dashboard.http.auth/callback
-  {:system #ig/ref :juxt.crux.ig/system}
+  {:system #ig/ref :juxt.crux.ig/system
+   :event-bus #ig/ref :edge.sse.event-stream/event-bus}
   :how-to-not-be-poor.dashboard.http.auth/store
   {:system #ig/ref :juxt.crux.ig/system}
   :how-to-not-be-poor.dashboard.http.admin-api/admin-handler

@@ -34,6 +34,7 @@
        [:> NumberField {:source "amount"}]
        [:> TextField {:source "transaction_classification"}]
        [:> TextField {:source "merchant_name"}]
+       [:> TextField {:source "transaction_type"}]
        [:> DateField {:source "timestamp"}]]]
      [:div {:style {:width 300 :margin "1em"}}
-      [:> Typography {:variant "title"} "Total spent: " (utils/format-amount sum)]]]))
+      [:> Typography {:variant "title"} "Total: " (utils/format-amount sum)]]]))

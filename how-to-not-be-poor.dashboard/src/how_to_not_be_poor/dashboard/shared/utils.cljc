@@ -25,5 +25,5 @@
   [n]
   (when n
     [:div
-     {:style {:color (if (neg? n) :green :red)}}
+     {:style {:color (if (neg? n) :red :green)}}
      (.format money-formatter n)]))

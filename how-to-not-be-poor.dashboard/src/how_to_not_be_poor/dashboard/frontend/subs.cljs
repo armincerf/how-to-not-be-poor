@@ -20,3 +20,8 @@
  ::table-details
  (fn [db _]
    (:table-details db)))
+
+(reg-sub
+ ::account-progress
+ (fn [db _]
+   (:account-progress db)))

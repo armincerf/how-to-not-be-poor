@@ -2,6 +2,8 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
+   [tick.alpha.api :as tick]
+   [edge.sse.event-stream :as sse]
    [crux.api :as crux]
    [how-to-not-be-poor.dashboard.crux.utils :as crux.utils]
    [integrant.core :as ig]
@@ -61,48 +63,77 @@
                  (or (:update_timestamp result)
                      (:timestamp result)))])))))
 
+(defn update-progress
+  [bus table-name result]
+  (sse/publish-global-event
+   bus {:event :update-progress
+        :body {:key :account-progress
+               :value (merge {(keyword (str "fetch-" table-name)) result}
+                             (when-not (= "transactions" table-name)
+                               {:fetch-transactions "loading"}))}}))
+
 (defn get-data
-  ([system table-name id-key]
-   (get-data system table-name id-key (str base-uri table-name)))
-  ([system table-name id-key uri]
-   (let [{:keys [access-token refresh-token]} (get-tokens system)]
-     (http/get uri
-               {:headers {"Authorization" (str "Bearer " access-token)}
-                :as :json
-                :async? true}
-               ;; respond callback
-               (fn [response]
-                 (transact-response system response table-name id-key)
-                 (cond
-                   (= table-name "accounts")
-                   (doseq [result (-> response :body :results)]
-                     (get-data
-                      system
-                      "transactions"
-                      :transaction_id
-                      (str base-uri "accounts/" (id-key result) "/transactions")))
-                   (= table-name "cards")
-                   (doseq [result (-> response :body :results)]
-                     (get-data
-                      system
-                      "transactions"
-                      :transaction_id
-                      (str base-uri "cards/" (id-key result) "/transactions")))))
-               ;; raise callback
-               (fn [exception]
-                 (println
-                  table-name
-                  "exception message is: "
-                  (.getMessage exception)))))))
+  [system bus {:keys [table-name id-key uri]
+               :or {uri (str base-uri table-name)}}]
+  (let [{:keys [access-token refresh-token]} (get-tokens system)]
+    (http/get uri
+              {:headers {"Authorization" (str "Bearer " access-token)}
+               :as :json
+               :async? true}
+              ;; respond callback
+              (fn [response]
+                (transact-response system response table-name id-key)
+                (update-progress bus table-name "success")
+                (let [fetch-transactions
+                      (fn [from result]
+                        (get-data
+                         system
+                         bus
+                         {:table-name "transactions"
+                          :id-key :transaction_id
+                          :uri (str base-uri from "/" (id-key result)
+                                    "/transactions?from="
+                                    "2016-01-01"
+                                    "&to="
+                                    (tick/today))}))]
+                  (cond
+                    (= table-name "accounts")
+                    (doseq [result (-> response :body :results)]
+                      (fetch-transactions table-name result))
+                    (= table-name "cards")
+                    (doseq [result (-> response :body :results)]
+                      (fetch-transactions table-name result)))))
+              ;; raise callback
+              (fn [exception]
+                (update-progress
+                 bus table-name (str "error (not supported by this bank)" (.getMessage exception)))
+                (println
+                 table-name
+                 "exception message is: "
+                 (.getMessage exception)
+                 (when (= table-name "transactions")
+                   exception))))))
 
 (defn download-data
-  [system]
-  (get-data system "info" :full_name)
-  (get-data system "accounts" :account_id)
-  (get-data system "cards" :account_id))
+  [system bus]
+  (get-data system bus {:table-name "info"
+                        :id-key :full_name})
+  (get-data system bus {:table-name "accounts"
+                        :id-key :account_id})
+  (get-data system bus {:table-name "cards"
+                        :id-key :account_id}))
 
 (defn authenticate-truelayer
-  [ctx system]
+  [ctx system bus]
+  (sse/publish-global-event
+   bus {:event :update-progress
+        :body {:key :account-progress
+               :value {:authentication "loading"
+                       :fetch-info "pending auth"
+                       :fetch-cards "pending auth"
+                       :fetch-accounts "pending auth"
+                       :fetch-transactions "pending vaild card or account"}}})
+  (Thread/sleep 3000)
   (let [{:keys [access_token refresh_token] :as response}
         (:body (http/post
                 "https://auth.truelayer.com/connect/token"
@@ -113,12 +144,19 @@
                    :redirect_uri "http://localhost:7979/callback"
                    :code (get-in ctx [:parameters :query "code"])})
                  :as :json}))
+        _ (sse/publish-global-event
+           bus {:event :update-progress
+                :body {:key :account-progress
+                       :value {:authentication (if access_token
+                                                 "success"
+                                                 "error")
+                               :fetch-info "loading"}}})
         {:keys [crux.tx/tx-time]}
         (store-tokens system access_token refresh_token)
         {:keys [access-token]}
         (crux.utils/pull-tx system :truelayer-tokens tx-time)]
     (when (some? access-token)
-      (download-data system))
+      (download-data system bus))
     (some? access-token)))
 
 (defmethod ig/init-key ::login
@@ -145,30 +183,18 @@
                       :else user)))}}}))
 
 (defmethod ig/init-key ::callback
-  [id {:keys [system]}]
+  [id {:keys [system event-bus]}]
   (yada/resource
    {:id id
     :methods
     {:get
      {:produces {:media-type "application/json"}
       :response (fn [ctx]
-                  (let [user (authenticate-truelayer ctx system)]
-                    (cond
-                      (= "suspended" (:status user))
-                      (merge (:response ctx)
-                             {:status 403
-                              :body {:key :username
-                                     :msg "Your account is suspended"}})
-                      (nil? user)
-                      (merge (:response ctx)
-                             {:status 401
-                              :body {:key :username
-                                     :msg "User not found"}})
-                      :else
-                      (merge
-                       (:response ctx)
-                       {:status 303
-                        :headers {"Location" "/"}}))))}}}))
+                  (let [user (future (authenticate-truelayer ctx system event-bus))]
+                    (merge
+                     (:response ctx)
+                     {:status 303
+                      :headers {"Location" "/"}})))}}}))
 
 (defmethod ig/init-key ::store
   [id {:keys [system]}]

@@ -5,4 +5,5 @@
                          "Hiya!"
                          "Bonjour!"
                          "Gracias!"]
+             :account-progress {}
              :greeting-index 0})

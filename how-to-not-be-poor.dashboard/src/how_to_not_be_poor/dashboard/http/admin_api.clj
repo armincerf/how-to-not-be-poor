@@ -128,6 +128,7 @@
 
 (defmethod ig/init-key ::admin-handler
   [id {:keys [system event-bus]}]
+  (def bus event-bus)
   [[[:table-name-string "/" :id]
     (yada/resource
      {:id id
