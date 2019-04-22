@@ -1,6 +1,5 @@
 (ns how-to-not-be-poor.dashboard.frontend.views
     (:require [reagent.core :as r :refer [atom]]
-              [cljs.pprint :as pp :refer [pprint]]
               [re-frame.core :refer [subscribe dispatch dispatch-sync]]
               [how-to-not-be-poor.dashboard.frontend.views.transactions :as transactions]
               [how-to-not-be-poor.dashboard.frontend.handlers :as handlers]
@@ -9,7 +8,7 @@
               [how-to-not-be-poor.dashboard.frontend.views.cards :as cards]
               [how-to-not-be-poor.dashboard.frontend.auth-provider :as auth]
               [how-to-not-be-poor.dashboard.frontend.login-page :as login-page]
-              [how-to-not-be-poor.dashboard.frontend.common :refer [rc ce]]
+              [how-to-not-be-poor.dashboard.frontend.common :refer [rc ce] :as common]
               [material-ui-core :refer [Icon Card CardContent CardHeader]]
               [data-provider]
               [react-admin :refer [Admin ListGuesser Resource Login]]))
@@ -20,16 +19,12 @@
                     "http://localhost:7979/callback"
                     "&enable_mock=true&enable_oauth_providers=true&enable_open_banking_providers=true&enable_credentials_sharing_providers=true"))
 
-(defn pprint-code
-  [obj]
-  [:code [:pre (with-out-str (pprint obj))]])
-
 (defn dashboard
   []
   (let [store (subscribe [::subs/store])]
     [:> Card
      [:> CardHeader {:title "Welcome!"}]
-     [:> CardContent (pprint-code @store)]
+     [:> CardContent (common/pprint-code @store)]
      [:> CardContent
       [:button {:on-click #(dispatch [::handlers/get-store])} "Load data"]]
      [:> CardContent

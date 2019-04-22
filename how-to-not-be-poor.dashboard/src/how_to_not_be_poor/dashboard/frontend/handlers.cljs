@@ -1,16 +1,38 @@
 (ns how-to-not-be-poor.dashboard.frontend.handlers
   (:require
     [re-frame.core :as rf]
+    [com.yetanalytics.sse-fx.event-source :as event-source]
+    [com.yetanalytics.sse-fx.events :refer [register-all!]]
     [how-to-not-be-poor.dashboard.frontend.ajax :as ajax]
     [day8.re-frame.http-fx]
     [how-to-not-be-poor.dashboard.frontend.db :as db]))
 
+(register-all!)
+
 ;; -- Handlers --------------------------------------------------------------
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::initialize-db
-  (fn [_ _]
-    db/app-db))
+  (fn [{:keys [db]} _]
+    {:db db/app-db
+     :dispatch [::init-event-source]}))
+
+(rf/reg-event-fx
+ ::init-event-source
+ (fn [{:keys [db] :as ctx} _]
+   {::event-source/init
+    {:uri "/events"
+     :handle-message [::sse-handle-message]}}))
+
+(rf/reg-event-fx
+ ::sse-handle-message
+ (fn [_ [_ _ e]]
+   {:dispatch [(:event e) (:body e)]}))
+
+(rf/reg-event-db
+ :sse-store
+ (fn [db [_ response]]
+   (assoc db (:key response) (:value response))))
 
 (rf/reg-event-fx
  ::generic-ajax-failure

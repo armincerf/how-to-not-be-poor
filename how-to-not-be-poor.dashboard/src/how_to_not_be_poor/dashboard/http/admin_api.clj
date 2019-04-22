@@ -1,7 +1,9 @@
 (ns how-to-not-be-poor.dashboard.http.admin-api
   (:require [clojure.string :as str]
             [clojure.tools.logging :as logging]
+            [edge.sse.event-stream :as sse]
             [how-to-not-be-poor.dashboard.crux.utils :as crux.utils]
+            [how-to-not-be-poor.dashboard.shared.utils :as utils]
             [integrant.core :as ig]
             [medley.core :as medley]
             [yada.yada :as yada]))
@@ -76,7 +78,7 @@
           results))
 
 (defn get-many
-  [system {:keys [parameters response]}]
+  [system bus {:keys [parameters response]}]
   (let [{:keys [table-name-string]} (:path parameters)
         table (keyword (.toLowerCase table-name-string))
         query-params (:query parameters)
@@ -90,12 +92,12 @@
         id-filters (some->> query-params
                          (medley/remove-keys #(or (str/starts-with? % "_")
                                                   (= % "q"))))
-        _ (def id-filters id-filters)
         search-text (get query-params "q")
         result (crux-get-many system table id-filters)
         result (if search-text
                  (filter-results-by-search result search-text)
                  result)
+        _ (def result result)
         row-count (count result)
         sorted-result
         (cond->> result
@@ -108,6 +110,10 @@
           (int? end)
           ((fn [s e r]
              (into [] (subvec (vec r) s e))) start (min end row-count)))]
+    (sse/publish-global-event
+     bus {:event :sse-store
+          :body {:key :table-details
+                 :value {:sum (utils/sum-key :amount result)}}})
     (merge response
            {:headers {"x-total-count" row-count}
             :body  (if (zero? row-count)
@@ -115,7 +121,7 @@
                      sorted-result)})))
 
 (defmethod ig/init-key ::admin-handler
-  [id {:keys [system]}]
+  [id {:keys [system event-bus]}]
   [[[:table-name-string "/" :id]
     (yada/resource
      {:id id
@@ -136,7 +142,7 @@
       :methods
       {:get
        {:produces {:media-type "application/json"}
-        :response #(get-many system %)}
+        :response #(get-many system event-bus %)}
        :post
        {:produces {:media-type "application/json"}
         :consumes {:media-type "application/json"}

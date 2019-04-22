@@ -15,3 +15,8 @@
  ::store
  (fn [db _]
    (:store db)))
+
+(reg-sub
+ ::table-details
+ (fn [db _]
+   (:table-details db)))

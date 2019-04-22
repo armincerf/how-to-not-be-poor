@@ -46,6 +46,7 @@
                          [["/" #ig/ref [:how-to-not-be-poor.dashboard/index :edge.yada.ig/classpath-name]]
                           ["/login" #ig/ref :how-to-not-be-poor.dashboard.http.auth/login]
                           ["/admin-api/" #ig/ref :how-to-not-be-poor.dashboard.http.admin-api/admin-handler]
+                          ["/events" #ig/ref :edge.sse.event-stream/global-event-stream]
                           ["/store" #ig/ref :how-to-not-be-poor.dashboard.http.auth/store]
                           ["/callback" #ig/ref :how-to-not-be-poor.dashboard.http.auth/callback]
                           ["" #ig/ref [:how-to-not-be-poor.dashboard/assets :edge.yada.ig/resources]]]]]]
@@ -61,8 +62,11 @@
   :how-to-not-be-poor.dashboard.http.auth/store
   {:system #ig/ref :juxt.crux.ig/system}
   :how-to-not-be-poor.dashboard.http.admin-api/admin-handler
-  {:system #ig/ref :juxt.crux.ig/system}
+  {:system #ig/ref :juxt.crux.ig/system
+   :event-bus #ig/ref :edge.sse.event-stream/event-bus}
 
+  :edge.sse.event-stream/event-bus nil
+  :edge.sse.event-stream/global-event-stream {:bus #ig/ref :sse/bus}
   }
 
  :ig/system #profile {:dev #merge [#ref [:ig.system/base]
