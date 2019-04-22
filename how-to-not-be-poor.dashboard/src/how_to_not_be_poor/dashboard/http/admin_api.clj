@@ -110,10 +110,16 @@
           (int? end)
           ((fn [s e r]
              (into [] (subvec (vec r) s e))) start (min end row-count)))]
-    (sse/publish-global-event
-     bus {:event :sse-store
-          :body {:key :table-details
-                 :value {:sum (utils/sum-key :amount result)}}})
+    (when (= :transactions table)
+      (sse/publish-global-event
+       bus {:event :sse-store
+            :body {:key :table-details
+                   :value {:sum (reduce (fn sum-transactions
+                                          [n tx]
+                                          (if (= "CREDIT" (:transaction_type tx))
+                                            (+ n (Math/abs (:amount tx)))
+                                            (- n (Math/abs (:amount tx)))))
+                                        0 result)}}}))
     (merge response
            {:headers {"x-total-count" row-count}
             :body  (if (zero? row-count)
