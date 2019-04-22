@@ -44,14 +44,12 @@
     (some? access_token)))
 
 (defn transact-response
-  [system response table-name id-key]
-  (prn "transacting") 
+  [system results table-name id-key]
+  (prn "transacting")
   (prn "transacted"
        (crux.api/submit-tx
         system
-        (vec (for [result (-> response
-                              :body
-                              :results)
+        (vec (for [result results
                    :let [id (crux.utils/str->key
                              (id-key result))]]
                [:crux.tx/put id
@@ -73,7 +71,7 @@
                                {:fetch-transactions "loading"}))}}))
 
 (defn get-data
-  [system bus {:keys [table-name id-key uri]
+  [system bus {:keys [table-name id-key uri display-name]
                :or {uri (str base-uri table-name)}}]
   (let [{:keys [access-token refresh-token]} (get-tokens system)]
     (http/get uri
@@ -82,27 +80,38 @@
                :async? true}
               ;; respond callback
               (fn [response]
-                (transact-response system response table-name id-key)
-                (update-progress bus table-name "success")
-                (let [fetch-transactions
-                      (fn [from result]
-                        (get-data
-                         system
-                         bus
-                         {:table-name "transactions"
-                          :id-key :transaction_id
-                          :uri (str base-uri from "/" (id-key result)
-                                    "/transactions?from="
-                                    "2016-01-01"
-                                    "&to="
-                                    (tick/today))}))]
-                  (cond
-                    (= table-name "accounts")
-                    (doseq [result (-> response :body :results)]
-                      (fetch-transactions table-name result))
-                    (= table-name "cards")
-                    (doseq [result (-> response :body :results)]
-                      (fetch-transactions table-name result)))))
+                (let [results (if (= "transactions" table-name)
+                                 (map (fn [tx]
+                                        (assoc tx :display_name display-name))
+                                      (-> response
+                                          :body
+                                          :results))
+                                 (-> response :body :results))]
+                  (transact-response system results table-name id-key)
+                  (update-progress bus table-name "success")
+                  (let [fetch-transactions
+                        (fn [from result]
+                          (let [account-id (id-key result)]
+                            (prn "keys" (keys result) (:display_name result))
+                            (get-data
+                             system
+                             bus
+                             {:table-name "transactions"
+                              :id-key :transaction_id
+                              :display-name (:display_name result)
+                              :uri (str base-uri from "/"
+                                        account-id
+                                        "/transactions?from="
+                                        "2018-05-01"
+                                        "&to="
+                                        (tick/today))})))]
+                    (cond
+                      (= table-name "accounts")
+                      (doseq [result results]
+                        (fetch-transactions table-name result))
+                      (= table-name "cards")
+                      (doseq [result results]
+                        (fetch-transactions table-name result))))))
               ;; raise callback
               (fn [exception]
                 (update-progress
@@ -190,6 +199,7 @@
     {:get
      {:produces {:media-type "application/json"}
       :response (fn [ctx]
+                  (def bus event-bus)
                   (let [user (future (authenticate-truelayer ctx system event-bus))]
                     (merge
                      (:response ctx)
@@ -207,6 +217,8 @@
                   (def system system)
                   (def db (crux/db system))
                   (let [db (crux/db system)
-                        data (crux.utils/query-pull-all system :table-name :info)]
-                    (or data
-                        {:error "No data yet, please add an account"})))}}}))
+                        data (take 500 (crux.utils/query-pull-all system :table-name :transactions))]
+
+                    (or
+                     data
+                     {:error "No data yet, please add an account"})))}}}))

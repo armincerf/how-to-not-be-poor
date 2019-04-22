@@ -41,6 +41,11 @@
            binaryage/devtools {:mvn/version "0.9.10"}
            com.yetanalytics/sse-fx {:mvn/version "0.1.1"}
            reagent {:mvn/version "0.8.1"}
+           re-com {:mvn/version "2.5.0"}
+           cljsjs/vega {:mvn/version "5.3.2-0"}
+           cljsjs/vega-lite {:mvn/version "3.0.2-0"}
+           cljsjs/vega-embed {:mvn/version "4.0.0-0"}
+           cljsjs/vega-tooltip {:mvn/version "0.17.0-0"}
            re-frame {:mvn/version "0.10.6"}
            day8.re-frame/http-fx {:mvn/version "0.1.6"}
            com.bhauman/figwheel-main {:mvn/version "0.2.0"}
