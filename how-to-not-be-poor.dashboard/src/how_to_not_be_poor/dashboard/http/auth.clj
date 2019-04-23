@@ -210,9 +210,26 @@
   [id {:keys [system]}]
   (yada/resource
    {:id id
+    :access-control
+    {:allow-origin #{"*"}
+     :allow-credentials true
+     :allow-methods #{:get :post}
+     :allow-headers #{"*"}}
     :methods
     {:get
      {:produces {:media-type "application/json"}
+      :response (fn [ctx]
+                  (def system system)
+                  (def db (crux/db system))
+                  (let [db (crux/db system)
+                        data (take 500 (crux.utils/query-pull-all system :table-name :transactions))]
+
+                    (or
+                     data
+                     {:error "No data yet, please add an account"})))}
+     :post
+     {:produces {:media-type "application/json"}
+      :consumes {:media-type "application/json"}
       :response (fn [ctx]
                   (def system system)
                   (def db (crux/db system))

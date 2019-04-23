@@ -1,7 +1,8 @@
 (ns how-to-not-be-poor.dashboard.frontend.common
   (:require [reagent.core :as reagent]
             [cljs.pprint :as pp :refer [pprint]]
-            [react-admin :refer [Filter TextInput]]))
+            [react-admin :refer [Filter TextInput]])
+  (:import [goog.async Debouncer]))
 
 (defn search-filter
   [props]
@@ -15,3 +16,6 @@
 (def rc reagent/reactify-component)
 (def ce reagent/create-element)
 
+(defn debounce [f interval]
+  (let [dbnc (Debouncer. f interval)]
+    (fn [& args] (.apply (.-fire dbnc) dbnc (to-array args)))))

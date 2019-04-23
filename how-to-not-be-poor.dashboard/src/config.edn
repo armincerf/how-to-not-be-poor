@@ -16,12 +16,14 @@
                                                             "react-admin"
                                                             "data-provider"
                                                             "ra-date-inputs"
+                                                            "ra-language-english"
                                                             "react-router-dom"
                                                             "react-redux"]
                                                  :global-exports {react-admin ReactAdmin
                                                                   material-ui-core MaterialUI
                                                                   data-provider dataProvider
                                                                   ra-date-inputs dateInputs
+                                                                  ra-language-english raEnglish
                                                                   react-router-dom ReactRouterDOM
                                                                   react-redux redux}}]
                                  :infer-externs true

@@ -2598,7 +2598,7 @@ promise@^7.1.1:
   dependencies:
     asap "~2.0.3"
 
-prop-types@^15.5.10, prop-types@^15.5.6, prop-types@^15.5.7, prop-types@^15.5.8, prop-types@^15.6.0, prop-types@^15.6.1, prop-types@^15.6.2:
+prop-types@^15.5.10, prop-types@^15.5.6, prop-types@^15.5.7, prop-types@^15.5.8, prop-types@^15.6.0, prop-types@^15.6.1, prop-types@^15.6.2, prop-types@^15.7.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
@@ -2718,6 +2718,11 @@ ra-language-english@^2.8.5:
   version "2.8.5"
   resolved "https://registry.yarnpkg.com/ra-language-english/-/ra-language-english-2.8.5.tgz#c8ca2dc8fcfc6c1c2aca2ee1192b55fc2b1365bf"
   integrity sha512-5cuR5PrA4YK+3na+kj3NGN9Li9R08m1vkS8SPMmApTCMLydUFlDcsZxR0VR/Z2oAtm8MhbHXAIKP945KReaSYA==
+
+ra-tree-language-english@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/ra-tree-language-english/-/ra-tree-language-english-2.3.0.tgz#7708bf6c2270a3d76e878d3df813c2c7abdb99dd"
+  integrity sha512-oQxbeCQ1BGZrHBvsOaBfV1NKjppvNNW0eoLQgYnshWzQ8ohQL4XBiHadORawn2akCkBSPeQmG46+OuDxBiskzQ==
 
 ra-ui-materialui@^2.8.6:
   version "2.8.6"

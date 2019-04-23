@@ -2,6 +2,7 @@
     (:require [reagent.core :as r :refer [atom]]
               [re-frame.core :refer [subscribe dispatch dispatch-sync]]
               [how-to-not-be-poor.dashboard.frontend.views.transactions :as transactions]
+              [ra-language-english :as ra-english]
               [how-to-not-be-poor.dashboard.frontend.handlers :as handlers]
               [how-to-not-be-poor.dashboard.frontend.graphs :as graphs]
               [how-to-not-be-poor.dashboard.frontend.views.info :as info]
@@ -11,9 +12,11 @@
               [how-to-not-be-poor.dashboard.frontend.login-page :as login-page]
               [how-to-not-be-poor.dashboard.frontend.common :refer [rc ce] :as common]
               [material-ui-core :refer [Icon Card CardContent CardHeader withStyles
-                                        CircularProgress                      ListItem ListItemText ListItemSecondaryAction ListItemIcon List]]
+                                        CircularProgress ListItem ListItemText
+                                        ListItemSecondaryAction ListItemIcon List]]
               [data-provider]
-              [react-admin :refer [Admin ListGuesser Resource Login] :as admin]))
+              [react-admin :refer [Admin ListGuesser Resource Login mergeTranslations] :as admin])
+    (:import [goog.async Debouncer]))
 
 (def oauth-url (str "https://auth.truelayer.com/?response_type=code&client_id=amipoor-944004&nonce="
                     (gensym)
@@ -40,31 +43,55 @@
 
 (defn dashboard
   []
-  (let [progress (subscribe [::subs/account-progress])]
-    [:<>
-     [:> Card
-      [:> CardHeader {:title "Welcome!"}]
-      [:> CardContent
-       [:div {:style {:width "220px"}}
-        [:> List
-         (when (seq @progress)
-           (for [[k v] @progress]
-             [:> ListItem
-              [:> ListItemText {:primary (str k)}]
-              [:> ListItemSecondaryAction
-               (cond
-                 (or (= "loading" v)
-                     (.includes v "pending"))
-                 [:> CircularProgress {:size 25}]
-                 :else
-                 [:> Icon "check_circle"])]]))]]]
-      (when (seq @progress)
+  (let [slider-max (atom 20)
+        slider-min (atom 0)]
+    (fn []
+      (let [progress (subscribe [::subs/account-progress])
+            update-slider-max (common/debounce #(reset! slider-max %) 100)
+            update-slider-min (common/debounce #(reset! slider-min %) 100)]
         [:<>
-         [:> CardContent "Your spending"]
-         [:> CardContent
-          [graphs/vega-lite graphs/amount-over-time]]])
-      [:> CardContent
-       [:> account-button]]]]))
+         [:> Card
+          [:> CardHeader {:title "Welcome!"}]
+          [:> CardContent
+           [:div {:style {:width "220px"}}
+            [:> List
+             (when (seq @progress)
+               (for [[k v] @progress]
+                 ^{:key k}
+                 [:> ListItem
+                  [:> ListItemText {:primary (str k)}]
+                  [:> ListItemSecondaryAction
+                   (cond
+                     (or (= "loading" v)
+                         (.includes v "pending"))
+                     [:> CircularProgress {:size 25}]
+                     :else
+                     [:> Icon "check_circle"])]]))]]]
+          (when (seq @progress)
+            [:<>
+             [:> CardContent "Your spending"]
+             [:> CardContent
+              [:div.slidercontainer
+               [:p "Max amount = " @slider-max]
+               [:input {:type "range"
+                        :min "-1000"
+                        :max "1000"
+                        :class "slider"
+                        :on-change
+                        #(update-slider-max (-> % .-target .-value))}]]]
+             [:> CardContent
+              [:div.slidercontainer
+               [:p "Min amount = " @slider-min]
+               [:input {:type "range"
+                        :min "-1000"
+                        :max "1000"
+                        :class "slider"
+                        :on-change
+                        #(update-slider-min (-> % .-target .-value))}]]]
+             [:> CardContent
+              [graphs/vega-lite (graphs/amount-over-time @slider-min @slider-max)]]])
+          [:> CardContent
+           [:> account-button]]]]))))
 
 (defn main-panel
   []
@@ -77,4 +104,5 @@
    [:> Resource {:name "Cards"
                  :list (rc cards/list-component)}]
    [:> Resource {:name "Transactions"
-                 :list (rc transactions/list-component)}]])
+                 :list (rc transactions/list-component)}]
+   [:> Resource {:name "Tags"}]])

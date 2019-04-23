@@ -63,30 +63,59 @@
     :reagent-render (fn [spec]
                       [:div#vis])}))
 
-(def amount-over-time
+(defn amount-over-time
+  [min max]
   {:data
-   {:url "/store",
+   {:url "/store"
     :format
-    {:type "json", :parse {:timestamp "date"}}},
-   :vconcat
-   [{:width 480,
-     :mark "area",
+    {:type "json" :parse {:timestamp "date"}}}
+   :transform [{:window [{:op "row_number" :as "row_number"}]}
+               {:filter (str "datum.amount < " max)}
+               {:filter (str "datum.amount > " min)}]
+   :hconcat
+   [{:selection {:brush {:type "interval"}}
+     :mark "point"
      :encoding
      {:x
-      {:field "timestamp",
-       :type "temporal",
-       :scale {:domain {:selection "brush"}},
-       :axis {:title ""}},
-      :y {:field "amount", :type "quantitative"}}}
-    {:width 480,
-     :height 60,
-     :mark "area",
-     :selection
-     {:brush
-      {:type "interval", :encodings ["x"]}},
-     :encoding
-     {:x {:field "timestamp", :type "temporal"},
-      :y
-      {:field "amount",
-       :type "quantitative",
-       :axis {:tickCount 3, :grid false}}}}]})
+      {:field "timestamp"
+       :type "temporal"
+       :axis {:title "Time"}}
+      :y {:field "amount"
+          :type "quantitative"
+          :axis {:title "Amount"}}}}
+    {:transform
+     [{:filter {:selection "brush"}}
+      {:window [{:op "rank" :as "rank"}]}
+      {:filter {:field "rank" :lt 20}}]
+     :hconcat
+     [{:title "Account name"
+       :mark "text"
+       :width 200
+       :encoding
+       {:text
+        {:field "display_name"
+         :type "nominal"}
+        :y
+        {:field "row_number"
+         :type "ordinal"
+         :axis nil}}}
+      {:title "Descripion"
+       :mark "text"
+       :width 300
+       :encoding
+       {:text {:field "description" :type "nominal"}
+        :y
+        {:field "row_number"
+         :type "ordinal"
+         :axis nil}}}
+      {:title "Amount"
+       :mark "text"
+       :encoding
+       {:text
+        {:field "amount"
+         :type "nominal"}
+        :y
+        {:field "row_number"
+         :type "ordinal"
+         :axis nil}}}]}]
+   :resolve {:legend {:color "independent"}}})
