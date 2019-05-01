@@ -1,0 +1,5 @@
+#!/bin/sh
+
+yarn build:prod
+clojure -A:build:build/once
+../bin/capsule -m edge.main -e 'target/prod' -A:prod htnbp.jar
