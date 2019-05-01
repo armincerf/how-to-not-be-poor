@@ -54,7 +54,8 @@
                           ["" #ig/ref [:how-to-not-be-poor.dashboard/assets :edge.yada.ig/resources]]]]]]
 
   ;; Crux
-  :juxt.crux.ig.system/standalone {:kv-backend "crux.kv.rocksdb.RocksKv"}
+  :juxt.crux.ig.system/standalone {:kv-backend "crux.kv.rocksdb.RocksKv"
+                                   :db-dir "crux-storage"}
 
   ;; Yada Resources
   :how-to-not-be-poor.dashboard.http.auth/login

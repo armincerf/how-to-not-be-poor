@@ -13,3 +13,4 @@
 **/*.jar
 
 **/resources/credentials.edn
+**/crux-storage/*
