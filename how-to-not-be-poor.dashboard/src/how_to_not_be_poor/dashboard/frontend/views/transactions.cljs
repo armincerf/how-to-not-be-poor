@@ -26,7 +26,7 @@
 
 (defn list-component
   [props]
-  (let [{:keys [sum] :as details} @(rf/subscribe [::sub/table-details])]
+  (let [{:keys [sum test] :as details} @(rf/subscribe [::sub/table-details])]
     [:<>
      [:> List (merge props {:filters (ce (rc common/search-filter))})
       [:> Datagrid
@@ -38,4 +38,5 @@
        [:> TextField {:source "transaction_type"}]
        [:> DateField {:source "timestamp"}]]]
      [:div {:style {:width 300 :margin "1em"}}
-      [:> Typography {:variant "title"} "Total: " (utils/format-amount sum)]]]))
+      [:> Typography {:variant "title"} "Total: " (utils/format-amount sum)]
+      [common/pprint-code test]]]))

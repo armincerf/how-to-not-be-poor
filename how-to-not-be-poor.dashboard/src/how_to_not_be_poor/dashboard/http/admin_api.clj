@@ -77,6 +77,35 @@
                                (.toLowerCase search-text))) result))
           results))
 
+(defmacro local-bindings
+  "Produces a map of the names of local bindings to their values."
+  []
+  (let [symbols (keys &env)]
+    (zipmap (map (fn [sym] `(quote ~sym)) symbols) symbols)))
+
+(declare ^:dynamic *locals*)
+
+(defn view-locals []
+  *locals*)
+
+(defn eval-with-locals
+  "Evals a string with given locals. The locals should be a map of symbols to
+  values. The string should start with 'clojure: '"
+  [locals s]
+  (let [form (read-string (str/replace-first s #"clojure: " ""))]
+    (binding [*locals* locals]
+      (eval
+       `(let ~(vec (mapcat #(list % `(*locals* '~%)) (keys locals)))
+          ~form)))))
+
+(comment
+
+  (let [a 1
+        b 2
+        c 3
+        locals (local-bindings)]
+    (eval-with-locals locals "(+ a 2)")))
+
 (defn get-many
   [system bus {:keys [parameters response]}]
   (let [{:keys [table-name-string]} (:path parameters)
@@ -92,10 +121,18 @@
         id-filters (some->> query-params
                          (medley/remove-keys #(or (str/starts-with? % "_")
                                                   (= % "q"))))
-        search-text (get query-params "q")
+        q-param (get query-params "q")
+        clojure-string? (and (seq q-param) (.contains q-param "clojure: "))
+        search-text (when-not clojure-string? q-param)
+        clojure-string (when clojure-string? q-param)
         result (crux-get-many system table id-filters)
-        result (if search-text
+        locals (local-bindings)
+        result (cond
+                 search-text
                  (filter-results-by-search result search-text)
+                 clojure-string
+                 (eval-with-locals locals clojure-string)
+                 :else
                  result)
         _ (def result result)
         row-count (count result)
@@ -116,10 +153,13 @@
             :body {:key :table-details
                    :value {:sum (reduce (fn sum-transactions
                                           [n tx]
-                                          (if (= "CREDIT" (:transaction_type tx))
-                                            (+ n (Math/abs (:amount tx)))
-                                            (- n (Math/abs (:amount tx)))))
-                                        0 result)}}}))
+                                          (if (:amount tx)
+                                            (if (= "CREDIT" (:transaction_type tx))
+                                              (+ n (Math/abs (:amount tx)))
+                                              (- n (Math/abs (:amount tx))))
+                                            n))
+                                        0 result)
+                           :test (take 10 result)}}}))
     (merge response
            {:headers {"x-total-count" row-count}
             :body  (if (zero? row-count)
